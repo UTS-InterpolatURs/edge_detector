@@ -31,6 +31,7 @@ include_directories(
 add_executable(${PROJECT_NAME}
   src/main.cpp
   src/image/ImageConverter.cpp
+  src/image/ImageProcessor.cpp
 )
 
 target_link_libraries(
