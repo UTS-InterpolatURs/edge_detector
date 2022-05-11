@@ -6,13 +6,15 @@ namespace Image {
 
     cv::Mat ImageProcessor::apply(cv::Mat image, std::vector<Option> options) {
         for(auto option : options) {
-            switch(option) {
-                case GREYSCALE:
-                    image = applyGreyscale(image);
-                case GAUSSIAN:
-                    image = applyGaussian(image);
-                case CANNY_EDGE:
-                    image = applyCanny(image);
+
+            if(option == GREYSCALE) {
+                image = applyGreyscale(image);
+            }else if(option == GAUSSIAN) {
+                image = applyGaussian(image);
+            }else if(option == CANNY_EDGE) {
+                image = applyCanny(image);
+            }else if(option == CONTOURS) {
+                image = applyContours(image);
             }
         }
 
@@ -35,6 +37,15 @@ namespace Image {
         cv::Mat edgeImage;
         cv::Canny(image, edgeImage, 100, 200, 3, false);
         return edgeImage;
+    }
+
+    cv::Mat ImageProcessor::applyContours(cv::Mat image) {
+        cv::Mat contourImage = image.clone();
+        std::vector<std::vector<cv::Point>> contours;
+        std::vector<cv::Vec4i> hierachy;
+        cv::findContours(image, contours, hierachy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
+        cv::drawContours(contourImage, contours, -1, cv::Scalar(0, 255, 0), 2);
+        return contourImage;
     }
 
 }

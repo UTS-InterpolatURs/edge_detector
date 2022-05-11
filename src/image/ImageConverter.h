@@ -15,6 +15,11 @@ namespace Image {
             // ~ImageConverter();
 
             cv::Mat convertMessageToCVImage(const sensor_msgs::ImageConstPtr &msg, std::string encoding = sensor_msgs::image_encodings::BGR8);
+            cv_bridge::CvImage convertCVImageToCVBridgeImage(cv::Mat image, std::string encoding = sensor_msgs::image_encodings::BGR8);
+            sensor_msgs::Image convertCVImageToMessage(cv::Mat image, std::string encoding = sensor_msgs::image_encodings::BGR8);
+
+        private:
+            int messageGenCount = 0;
     };
 };
 
