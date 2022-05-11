@@ -22,6 +22,12 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+install(
+  FILES
+  launch/launch.launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+)
+
 # add_library(img 
 #   src/image/ImageConverter.cpp
 # )

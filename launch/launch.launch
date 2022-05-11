@@ -1,0 +1,7 @@
+<launch>
+
+    <!-- Params -->
+
+    <!-- Nodes -->
+    <node name="edge_detector" pkg="edge_detector" type="edge_detector" output="screen" />
+</launch>
