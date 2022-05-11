@@ -15,7 +15,12 @@ image_transport::Publisher imagePub;
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     cv::Mat image = converter.convertMessageToCVImage(msg);
-    image = processor.apply(image, std::vector<ImageProcessor::Option>{ImageProcessor::Option::GREYSCALE, ImageProcessor::Option::CANNY_EDGE});
+    image = processor.apply(image, std::vector<ImageProcessor::Option>{
+        ImageProcessor::Option::GREYSCALE,
+        ImageProcessor::Option::GAUSSIAN,
+        ImageProcessor::Option::CANNY_EDGE, 
+        ImageProcessor::Option::CONTOURS
+    });
     sensor_msgs::Image message = converter.convertCVImageToMessage(image, sensor_msgs::image_encodings::MONO8);
     imagePub.publish(message);
 }

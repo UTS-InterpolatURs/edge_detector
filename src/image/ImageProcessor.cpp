@@ -29,6 +29,7 @@ namespace Image {
 
     cv::Mat ImageProcessor::applyGaussian(cv::Mat image) {
         cv::Mat imageBlurred;
+
         cv::GaussianBlur(image, imageBlurred, cv::Size(3,3), 0, 0);
         return imageBlurred;
     }
@@ -40,12 +41,18 @@ namespace Image {
     }
 
     cv::Mat ImageProcessor::applyContours(cv::Mat image) {
-        cv::Mat contourImage = image.clone();
         std::vector<std::vector<cv::Point>> contours;
         std::vector<cv::Vec4i> hierachy;
-        cv::findContours(image, contours, hierachy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
-        cv::drawContours(contourImage, contours, -1, cv::Scalar(0, 255, 0), 2);
-        return contourImage;
+
+        cv::findContours(image, contours, hierachy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+        cv::Mat drawing = cv::Mat::zeros(image.size(), CV_8UC1);
+
+        for (size_t i = 0; i < contours.size(); i++) {
+            cv::Scalar color = cv::Scalar(255, 255, 255);
+            cv::drawContours(drawing, contours, (int)i, color, 2, cv::LINE_8, hierachy, 0);
+        }
+
+        return drawing;
     }
 
 }
