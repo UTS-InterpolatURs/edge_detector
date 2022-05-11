@@ -1,0 +1,1 @@
+docker run -it --net=host osrf/ros:melodic-desktop-full roscore
