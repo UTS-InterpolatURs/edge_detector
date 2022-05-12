@@ -17,7 +17,8 @@ namespace Image {
                 GREYSCALE,
                 GAUSSIAN,
                 CANNY_EDGE,
-                CONTOURS
+                CONTOURS,
+                BILATERAL_FILTER
             };
 
             cv::Mat apply(cv::Mat image, std::vector<Option> options);
@@ -25,6 +26,7 @@ namespace Image {
             cv::Mat applyGreyscale(cv::Mat image);
             cv::Mat applyGaussian(cv::Mat image);
             cv::Mat applyCanny(cv::Mat image);
+            cv::Mat applyBilateralFilter(cv::Mat image);
             cv::Mat applyContours(cv::Mat image);
     };
 };

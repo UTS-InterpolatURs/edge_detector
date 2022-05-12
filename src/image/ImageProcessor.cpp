@@ -15,6 +15,8 @@ namespace Image {
                 image = applyCanny(image);
             }else if(option == CONTOURS) {
                 image = applyContours(image);
+            }else if(option == BILATERAL_FILTER) {
+                image = applyBilateralFilter(image);
             }
         }
 
@@ -30,7 +32,7 @@ namespace Image {
     cv::Mat ImageProcessor::applyGaussian(cv::Mat image) {
         cv::Mat imageBlurred;
 
-        cv::GaussianBlur(image, imageBlurred, cv::Size(3,3), 0, 0);
+        cv::GaussianBlur(image, imageBlurred, cv::Size(5,5), 0, 0);
         return imageBlurred;
     }
 
@@ -38,6 +40,12 @@ namespace Image {
         cv::Mat edgeImage;
         cv::Canny(image, edgeImage, 100, 200, 3, false);
         return edgeImage;
+    }
+
+    cv::Mat ImageProcessor::applyBilateralFilter(cv::Mat image) {
+        cv::Mat out;
+        cv::bilateralFilter(image, out, 5, 5, 150);
+        return out;
     }
 
     cv::Mat ImageProcessor::applyContours(cv::Mat image) {
