@@ -38,7 +38,7 @@ namespace Image {
 
     cv::Mat ImageProcessor::applyCanny(cv::Mat image) {
         cv::Mat edgeImage;
-        cv::Canny(image, edgeImage, 100, 200, 3, false);
+        cv::Canny(image, edgeImage, 75, 100, 3, false);
         return edgeImage;
     }
 
