@@ -8,12 +8,26 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  message_generation
 )
 
 find_package(OpenCV REQUIRED)
 
+add_message_files(
+  DIRECTORY
+  msg
+  FILES
+  NamedFeature.msg
+  RecognisedFeatureArray.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs geometry_msgs sensor_msgs
+)
+
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cv_bridge geometry_msgs image_transport sensor_msgs
+  CATKIN_DEPENDS roscpp std_msgs cv_bridge geometry_msgs image_transport sensor_msgs message_runtime
 )
 
 include_directories(
@@ -44,5 +58,6 @@ target_link_libraries(
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
-  # img
 )
+
+add_dependencies(${PROJECT_NAME} edge_detector_generate_messages_cpp)
