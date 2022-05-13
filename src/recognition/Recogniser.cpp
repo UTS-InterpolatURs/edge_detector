@@ -57,8 +57,8 @@ namespace Recognition {
                 return -1;
             }
 
-            if(featureArea >= (area-1000) && featureArea <= (area+1000)) { // Gives a small margin for error 
-                ROS_INFO_STREAM("Area: " << area << " Areaf " << featureArea);
+            if(featureArea >= (area-500) && featureArea <= (area+500)) { // Gives a small margin for error 
+                // ROS_INFO_STREAM("Area: " << area << " Areaf " << featureArea);
                 return (int)i;
             }
         }

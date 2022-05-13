@@ -43,7 +43,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     for(auto feature : out) {
         cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
         cv::Point textPoint = cv::Point(feature.rect.br().x, feature.rect.br().y+10);
-        cv::putText(blankImage, feature.feature->name, textPoint, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 0.9, cv::Scalar(156,200, 50));
+        cv::putText(blankImage, feature.feature->name, textPoint, cv::FONT_HERSHEY_COMPLEX, 1.2, cv::Scalar(255,0, 0));
 
         edge_detector::NamedFeature featureMsg;
         featureMsg.name = feature.feature->name;
@@ -62,7 +62,12 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
     featurePub.publish(array);
 
-    sensor_msgs::Image message = converter.convertCVImageToMessage(blankImage, sensor_msgs::image_encodings::RGB8);
+    cv::Mat transparent;
+    cv::Mat background = cv::imread("/home/jon/Pictures/IMG_3911.jpeg");
+    cv::inRange(blankImage, cv::Scalar(0,0,0), cv::Scalar(0,0,0), transparent);
+    blankImage.copyTo(background, 255-transparent);
+
+    sensor_msgs::Image message = converter.convertCVImageToMessage(background, sensor_msgs::image_encodings::RGB8);
     imagePub.publish(message);
 }
 
@@ -80,7 +85,7 @@ int main(int argc, char **argv) {
     Recognition::RectangularFeature *computer = new Recognition::RectangularFeature("Computer", 306, 141);
     Recognition::RectangularFeature *keyslot = new Recognition::RectangularFeature("Keyslot", 164, 166);
     Recognition::RectangularFeature *batteryBox = new Recognition::RectangularFeature("Battery Box", 204, 409);
-    Recognition::RectangularFeature *ethernetA = new Recognition::RectangularFeature("Battery Box", 204, 409);
+    Recognition::RectangularFeature *ethernetA = new Recognition::RectangularFeature("Ethernet A", 164, 166);
     Recognition::RectangularFeature *ethernetB = new Recognition::RectangularFeature("Ethernet B", 140, 140);
     Recognition::RectangularFeature *coinHolder = new Recognition::RectangularFeature("Coin Holder", 90, 271);
 
