@@ -103,7 +103,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
     float angle = angleRecog.processImage(image);
 
-    anglePub.publish(angle);
+    std_msgs::Float32 angleMessage;
+    angleMessage.data = angle;
+    anglePub.publish(angleMessage);
 }
 
 int main(int argc, char **argv) {
