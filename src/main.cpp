@@ -144,7 +144,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
     float angle = angleRecog.processImage(image);
 
-    ROS_INFO("Angle: " << std::to_string(angle));
+    // ROS_INFO("Angle: " << std::to_string(angle));
 
     std_msgs::Float32 angleMessage;
     angleMessage.data = angle;
