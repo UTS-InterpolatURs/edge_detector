@@ -6,11 +6,12 @@ namespace Recognition {
     float AngleRecogniser::processImage(cv::Mat image) {
         std::pair<std::vector<cv::Point>, cv::Vec4i> pair = calculateContours(image);
         std::vector<cv::Point> boardPoints = pair.first;
-        std::vector<cv::Point> poly;
 
         cv::approxPolyDP(contours, poly, 3, true);
 
-        return 0.0;
+        cv::RotatedRect rect = minAreaRect(boardPoints);
+
+        return rect.angle();
     }
 
     std::pair<std::vector<cv::Point>, cv::Vec4i> AngleRecogniser::calculateContours(cv::Mat image) {
