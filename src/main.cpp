@@ -96,13 +96,55 @@ int sequenceCounter = 0;
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     cv::Mat inputImage = converter.convertMessageToCVImage(msg);
 
+    ROS_INFO_STREAM("hello world");
+
     if(inputImage.empty()) return;
 
     cv::Mat image = inputImage.clone();
 
+    image = processor.apply(image, std::vector<ImageProcessor::Option>{
+        ImageProcessor::Option::GREYSCALE,
+        ImageProcessor::Option::GAUSSIAN,
+        ImageProcessor::Option::BILATERAL_FILTER,
+        ImageProcessor::Option::CANNY_EDGE
+    });
+
+    Recognition::Recogniser recog = Recognition::Recogniser(features);
+    std::vector<Recognition::RecognisedFeature> out = recog.processImage(image);
+
+    cv::Mat blankImage;
+    cv::cvtColor(cv::Mat(image.size(), image.type()), blankImage, CV_GRAY2RGB);
+
+    std::vector<edge_detector::NamedFeature> namedFeatures;
+
+    for(auto feature : out) {
+        // if(feature.rect.area() < 8000) continue; 
+        cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
+        cv::Point textPoint = cv::Point(feature.rect.br().x, feature.rect.br().y+10);
+
+        std::stringstream stream;
+        stream << "W" << std::to_string(feature.rect.width) << "/H" << std::to_string(feature.rect.height);
+        std::string str;
+        stream >> str;
+
+        cv::putText(blankImage, str, textPoint, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 0.9, cv::Scalar(156,200, 50));
+    }
+
+    cv::Mat transparent;
+    cv::Mat background = inputImage.clone();
+    cv::inRange(blankImage, cv::Scalar(0,0,0), cv::Scalar(0,0,0), transparent);
+    blankImage.copyTo(background, 255-transparent);
+
+    sensor_msgs::Image message = converter.convertCVImageToMessage(blankImage, sensor_msgs::image_encodings::RGB8);
+    imagePub.publish(message);
+
+    ROS_INFO("Cloned image");
+
     Recognition::AngleRecogniser angleRecog;
 
     float angle = angleRecog.processImage(image);
+
+    ROS_INFO("Angle: " << angle);
 
     std_msgs::Float32 angleMessage;
     angleMessage.data = angle;
