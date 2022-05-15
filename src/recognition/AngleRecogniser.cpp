@@ -7,8 +7,6 @@ namespace Recognition {
         std::pair<std::vector<cv::Point>, cv::Vec4i> pair = calculateContours(image);
         std::vector<cv::Point> boardPoints = pair.first;
 
-        cv::approxPolyDP(contours, poly, 3, true);
-
         cv::RotatedRect rect = minAreaRect(boardPoints);
 
         return rect.angle();
