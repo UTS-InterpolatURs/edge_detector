@@ -52,6 +52,7 @@ add_executable(${PROJECT_NAME}
   src/image/ImageConverter.cpp
   src/image/ImageProcessor.cpp
   src/recognition/Recogniser.cpp
+  src/recognition/AngleRecogniser.cpp
 )
 
 target_link_libraries(
