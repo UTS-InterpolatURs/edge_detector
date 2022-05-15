@@ -23,8 +23,13 @@ std::vector<Recognition::Feature*> features;
 int sequenceCounter = 0;
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
-    // cv::Mat image = converter.convertMessageToCVImage(msg);
-    cv::Mat image = cv::imread("/home/jon/Pictures/IMG_3911.jpeg");
+    cv::Mat inputImage = converter.convertMessageToCVImage(msg);
+
+    if(inputImage.empty()) return;
+
+    ROS_INFO("thing");
+    // cv::Mat image = cv::imread("/home/jon/Pictures/IMG_3911.jpeg");
+    cv::Mat image = inputImage.clone();
     image = processor.apply(image, std::vector<ImageProcessor::Option>{
         ImageProcessor::Option::GREYSCALE,
         ImageProcessor::Option::GAUSSIAN,
@@ -40,34 +45,48 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
     std::vector<edge_detector::NamedFeature> namedFeatures;
 
-    for(auto feature : out) {
-        cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
-        cv::Point textPoint = cv::Point(feature.rect.br().x, feature.rect.br().y+10);
-        cv::putText(blankImage, feature.feature->name, textPoint, cv::FONT_HERSHEY_COMPLEX, 1.2, cv::Scalar(255,0, 0));
+    // for(auto feature : out) {
+    //     // if(feature.rect.area() < 8000) continue; 
+    //     cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
+    //     cv::Point textPoint = cv::Point(feature.rect.br().x, feature.rect.br().y+10);
 
-        edge_detector::NamedFeature featureMsg;
-        featureMsg.name = feature.feature->name;
-        featureMsg.imageX = feature.rect.tl().x;
-        featureMsg.imageY = feature.rect.tl().y;
-        featureMsg.rectHeight = feature.rect.height;
-        featureMsg.rectWidth = feature.rect.width;
-        namedFeatures.push_back(featureMsg);
-    }
+    //     std::stringstream stream;
+    //     stream << "W" << std::to_string(feature.rect.width) << "/H" << std::to_string(feature.rect.height);
+    //     std::string str;
+    //     stream >> str;
 
-    edge_detector::RecognisedFeatureArray array;
-    array.header.seq = sequenceCounter;
-    array.header.stamp = ros::Time::now();
-    array.header.frame_id = 0x01;
-    array.features = namedFeatures;
+    //     cv::putText(blankImage, str, textPoint, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 0.9, cv::Scalar(156,200, 50));
+    // }
 
-    featurePub.publish(array);
+    // for(auto feature : out) {
+    //     cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
+    //     cv::Point textPoint = cv::Point(feature.rect.br().x, feature.rect.br().y+10);
+    //     cv::putText(blankImage, feature.feature->name, textPoint, cv::FONT_HERSHEY_COMPLEX, 1.2, cv::Scalar(255,0, 0));
 
-    cv::Mat transparent;
-    cv::Mat background = cv::imread("/home/jon/Pictures/IMG_3911.jpeg");
-    cv::inRange(blankImage, cv::Scalar(0,0,0), cv::Scalar(0,0,0), transparent);
-    blankImage.copyTo(background, 255-transparent);
+    //     edge_detector::NamedFeature featureMsg;
+    //     featureMsg.name = feature.feature->name;
+    //     featureMsg.imageX = feature.rect.tl().x;
+    //     featureMsg.imageY = feature.rect.tl().y;
+    //     featureMsg.rectHeight = feature.rect.height;
+    //     featureMsg.rectWidth = feature.rect.width;
+    //     namedFeatures.push_back(featureMsg);
+    // }
 
-    sensor_msgs::Image message = converter.convertCVImageToMessage(background, sensor_msgs::image_encodings::RGB8);
+    // edge_detector::RecognisedFeatureArray array;
+    // array.header.seq = sequenceCounter;
+    // array.header.stamp = ros::Time::now();
+    // array.header.frame_id = 0x01;
+    // array.features = namedFeatures;
+
+    // featurePub.publish(array);
+
+    // cv::Mat transparent;
+    // // cv::Mat background = cv::imread("/home/jon/Pictures/IMG_3911.jpeg");
+    // cv::Mat background = inputImage.clone();
+    // cv::inRange(blankImage, cv::Scalar(0,0,0), cv::Scalar(0,0,0), transparent);
+    // blankImage.copyTo(background, 255-transparent);
+
+    sensor_msgs::Image message = converter.convertCVImageToMessage(blankImage, sensor_msgs::image_encodings::RGB8);
     imagePub.publish(message);
 }
 
@@ -76,7 +95,8 @@ int main(int argc, char **argv) {
     ros::NodeHandle n;
 
     image_transport::ImageTransport transport(n);
-    image_transport::Subscriber imageSub = transport.subscribe("/camera/color/image_raw", 1, imageCallback);
+    // image_transport::Subscriber imageSub = transport.subscribe("/camera/color/image_raw", 1, imageCallback);
+    image_transport::Subscriber imageSub = transport.subscribe("/image_publisher_1652420056196693570/image_raw", 10, &imageCallback);
     imagePub = transport.advertise("/image_convert/output_video", 1);
 
     featurePub = n.advertise<edge_detector::RecognisedFeatureArray>("features", 1000);

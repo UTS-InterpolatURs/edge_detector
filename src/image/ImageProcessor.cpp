@@ -25,7 +25,10 @@ namespace Image {
 
     cv::Mat ImageProcessor::applyGreyscale(cv::Mat image) {
         cv::Mat imageGrey;
-        cv::cvtColor(image, imageGrey, CV_BGR2GRAY);
+
+        // ROS_INFO_STREAM(image.-)
+
+        cv::cvtColor(image, imageGrey, CV_BGRA2GRAY);
         return imageGrey;
     }
 
