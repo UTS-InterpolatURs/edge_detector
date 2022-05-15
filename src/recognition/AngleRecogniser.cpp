@@ -9,7 +9,7 @@ namespace Recognition {
 
         cv::RotatedRect rect = minAreaRect(boardPoints);
 
-        return rect.angle();
+        return rect.angle;
     }
 
     std::pair<std::vector<cv::Point>, cv::Vec4i> AngleRecogniser::calculateContours(cv::Mat image) {
