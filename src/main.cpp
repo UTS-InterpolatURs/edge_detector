@@ -9,6 +9,7 @@
 
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
+#include <std_msgs/Float32.h>
 #include <vector>
 
 using namespace Image;
