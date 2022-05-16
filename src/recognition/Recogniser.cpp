@@ -13,18 +13,19 @@ namespace Recognition {
         std::vector<std::vector<cv::Point>> contourPoly(contours.size());
 
         for(size_t i = 0; i < contours.size(); i++) {
+            if(i > 0) return output;
             cv::approxPolyDP(contours[i], contourPoly[i], 3, true);
-            cv::Rect rect = cv::boundingRect(contourPoly[i]);
+            cv::RotatedRect rect = cv::minAreaRect(contourPoly[i]);
 
-            int index = findMatchingArea(rect);
+            // int index = findMatchingArea(rect);
 
-            if(index == -1) continue;
+            // if(index == -1) continue;
 
             RecognisedFeature feature;
             feature.rect = rect;
-            feature.imageX = rect.x;
-            feature.imageY = rect.y;
-            feature.feature = featureList.at(index);
+            feature.imageX = rect.boundingRect().x;
+            feature.imageY = rect.boundingRect().y;
+            // feature.feature = featureList.at(i);
             feature.contourPoints = contours.at(i);
 
             output.push_back(feature);

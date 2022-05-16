@@ -17,7 +17,7 @@ namespace Recognition {
         RecognisedFeature() {}
         Feature *feature;
         std::vector<cv::Point> contourPoints;
-        cv::Rect rect;
+        cv::RotatedRect rect;
 
         int imageX;
         int imageY;

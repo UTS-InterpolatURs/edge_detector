@@ -119,11 +119,25 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
     for(auto feature : out) {
         // if(feature.rect.area() < 8000) continue; 
-        cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
-        cv::Point textPoint = cv::Point(feature.rect.br().x, feature.rect.br().y+10);
+        // cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
+        cv::RotatedRect rect = feature.rect;
+        cv::Point2f vertices2f[4];
+        rect.points(vertices2f);
+
+        std::vector<cv::Point> vertices(4);
+        for(int i = 0; i < 4; i++) {
+            vertices[i] = vertices2f[i];
+        }
+
+        cv::Point textPoint = cv::Point(vertices[0].x, vertices[0].y+10);
+
+        // cv::fillConvexPoly(blankImage, vertices, 4, cv::Scalar(255, 0, 0));
+
+        cv::polylines(blankImage, vertices, true, cv::Scalar(255,0,0), 3);
+        
 
         std::stringstream stream;
-        stream << "W" << std::to_string(feature.rect.width) << "/H" << std::to_string(feature.rect.height);
+        // stream << "W" << std::to_string(feature.rect.width) << "/H" << std::to_string(feature.rect.height);
         std::string str;
         stream >> str;
 
