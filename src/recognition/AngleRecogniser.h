@@ -9,11 +9,17 @@
 #include <opencv2/highgui/highgui.hpp>
 
 namespace Recognition {
+
+    struct CurrentAngle {
+        float boardAngle;
+        float recommendedRotation;
+    };
+
     class AngleRecogniser {
         public:
             AngleRecogniser();
 
-            float processImage(cv::Mat image);
+            CurrentAngle processImage(cv::Mat image);
         private:
             std::pair<std::vector<cv::Point>, cv::Vec4i> calculateContours(cv::Mat image);
     };

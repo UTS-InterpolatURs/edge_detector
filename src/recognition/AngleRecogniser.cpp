@@ -3,13 +3,16 @@
 namespace Recognition {
     AngleRecogniser::AngleRecogniser() { }
 
-    float AngleRecogniser::processImage(cv::Mat image) {
+    CurrentAngle AngleRecogniser::processImage(cv::Mat image) {
         std::pair<std::vector<cv::Point>, cv::Vec4i> pair = calculateContours(image);
         std::vector<cv::Point> boardPoints = pair.first;
 
         cv::RotatedRect rect = minAreaRect(boardPoints);
 
-        return rect.angle;
+        CurrentAngle angle;
+        angle.boardAngle = rect.angle;
+
+        return angle;
     }
 
     std::pair<std::vector<cv::Point>, cv::Vec4i> AngleRecogniser::calculateContours(cv::Mat image) {
