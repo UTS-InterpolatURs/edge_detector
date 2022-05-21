@@ -12,6 +12,8 @@
 #include <std_msgs/Float32.h>
 #include <vector>
 
+#include "opencv2/objdetect.hpp"
+
 using namespace Image;
 
 ImageConverter converter;
@@ -93,6 +95,8 @@ int sequenceCounter = 0;
 //     imagePub.publish(message);
 // }
 
+cv::CascadeClassifier classifier;
+
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     cv::Mat inputImage = converter.convertMessageToCVImage(msg);
 
@@ -104,70 +108,86 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
     image = processor.apply(image, std::vector<ImageProcessor::Option>{
         ImageProcessor::Option::GREYSCALE,
-        ImageProcessor::Option::GAUSSIAN,
-        ImageProcessor::Option::BILATERAL_FILTER,
-        ImageProcessor::Option::CANNY_EDGE
+        // ImageProcessor::Option::GAUSSIAN,
+        // ImageProcessor::Option::BILATERAL_FILTER,
+        // ImageProcessor::Option::CANNY_EDGE
     });
 
-    Recognition::Recogniser recog = Recognition::Recogniser(features);
-    std::vector<Recognition::RecognisedFeature> out = recog.processImage(image);
+    std::vector<cv::Rect> detections;
+    classifier.detectMultiScale(image, detections);
 
-    cv::Mat blankImage;
-    cv::cvtColor(cv::Mat(image.size(), image.type()), blankImage, CV_GRAY2RGB);
+    for(size_t i = 0; i < detections.size(); i++) {
+        cv::Point center(detections[i].x + detections[i].width / 2, detections[i].y + detections[i].height / 2);
+        cv::ellipse(image, center, cv::Size(detections[i].width / 2, detections[i].height / 2), 0,0, 360, cv::Scalar(255,0,255));
 
-    std::vector<edge_detector::NamedFeature> namedFeatures;
 
-    for(auto feature : out) {
-        // if(feature.rect.area() < 8000) continue; 
-        // cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
-        cv::RotatedRect rect = feature.rect;
-        cv::Point2f vertices2f[4];
-        rect.points(vertices2f);
-
-        std::vector<cv::Point> vertices(4);
-        for(int i = 0; i < 4; i++) {
-            vertices[i] = vertices2f[i];
-        }
-
-        cv::Point textPoint = cv::Point(vertices[0].x, vertices[0].y+10);
-
-        // cv::fillConvexPoly(blankImage, vertices, 4, cv::Scalar(255, 0, 0));
-
-        cv::polylines(blankImage, vertices, true, cv::Scalar(255,0,0), 3);
-        
-
-        std::stringstream stream;
-        // stream << "W" << std::to_string(feature.rect.width) << "/H" << std::to_string(feature.rect.height);
-        std::string str;
-        stream >> str;
-
-        cv::putText(blankImage, str, textPoint, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 0.9, cv::Scalar(156,200, 50));
     }
 
-    cv::Mat transparent;
-    cv::Mat background = inputImage.clone();
-    cv::inRange(blankImage, cv::Scalar(0,0,0), cv::Scalar(0,0,0), transparent);
-    blankImage.copyTo(background, 255-transparent);
-
-    sensor_msgs::Image message = converter.convertCVImageToMessage(blankImage, sensor_msgs::image_encodings::RGB8);
+    sensor_msgs::Image message = converter.convertCVImageToMessage(image, sensor_msgs::image_encodings::MONO8);
     imagePub.publish(message);
 
-    ROS_INFO("Cloned image");
+    // Recognition::Recogniser recog = Recognition::Recogniser(features);
+    // std::vector<Recognition::RecognisedFeature> out = recog.processImage(image);
 
-    Recognition::AngleRecogniser angleRecog;
+    // cv::Mat blankImage;
+    // cv::cvtColor(cv::Mat(image.size(), image.type()), blankImage, CV_GRAY2RGB);
 
-    Recognition::CurrentAngle angle = angleRecog.processImage(image);
+    // std::vector<edge_detector::NamedFeature> namedFeatures;
 
-    // ROS_INFO("Angle: " << std::to_string(angle));
+    // for(auto feature : out) {
+    //     // if(feature.rect.area() < 8000) continue; 
+    //     // cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
+    //     cv::RotatedRect rect = feature.rect;
+    //     cv::Point2f vertices2f[4];
+    //     rect.points(vertices2f);
 
-    std_msgs::Float32 angleMessage;
-    angleMessage.data = angle.boardAngle;
-    anglePub.publish(angleMessage);
+    //     std::vector<cv::Point> vertices(4);
+    //     for(int i = 0; i < 4; i++) {
+    //         vertices[i] = vertices2f[i];
+    //     }
+
+    //     cv::Point textPoint = cv::Point(vertices[0].x, vertices[0].y+10);
+
+    //     // cv::fillConvexPoly(blankImage, vertices, 4, cv::Scalar(255, 0, 0));
+
+    //     cv::polylines(blankImage, vertices, true, cv::Scalar(255,0,0), 3);
+        
+
+    //     std::stringstream stream;
+    //     // stream << "W" << std::to_string(feature.rect.width) << "/H" << std::to_string(feature.rect.height);
+    //     std::string str;
+    //     stream >> str;
+
+    //     cv::putText(blankImage, str, textPoint, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 0.9, cv::Scalar(156,200, 50));
+    // }
+
+    // cv::Mat transparent;
+    // cv::Mat background = inputImage.clone();
+    // cv::inRange(blankImage, cv::Scalar(0,0,0), cv::Scalar(0,0,0), transparent);
+    // blankImage.copyTo(background, 255-transparent);
+
+    // sensor_msgs::Image message = converter.convertCVImageToMessage(blankImage, sensor_msgs::image_encodings::RGB8);
+    // imagePub.publish(message);
+
+    // ROS_INFO("Cloned image");
+
+    // Recognition::AngleRecogniser angleRecog;
+
+    // Recognition::CurrentAngle angle = angleRecog.processImage(image);
+
+    // std_msgs::Float32 angleMessage;
+    // angleMessage.data = angle.boardAngle;
+    // anglePub.publish(angleMessage);
 }
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "edge_detector");
     ros::NodeHandle n;
+
+    if(!classifier.load("/home/jon/development/haar/ethernetport/empty_data/cascade.xml")) {
+        ROS_ERROR("Error loading classifier");
+        return -1;
+    }
 
     image_transport::ImageTransport transport(n);
     image_transport::Subscriber imageSub = transport.subscribe("/camera/color/image_raw", 1, imageCallback);
@@ -192,6 +212,8 @@ int main(int argc, char **argv) {
     features.push_back(ethernetA);
     features.push_back(ethernetB);
     features.push_back(coinHolder);
+
+
 
     ros::spin();
 }
