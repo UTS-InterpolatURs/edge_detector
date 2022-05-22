@@ -6,6 +6,7 @@
         "limitSymbolsToIncludedHeaders": false
       },
       "includePath": [
+        "/home/jon/robothon_ws/devel/include/**",
         "/opt/ros/melodic/include/**",
         "/home/jon/robothon_ws/src/edge_detector/include/**",
         "/usr/include/**"

@@ -25,7 +25,10 @@ namespace Image {
 
     cv::Mat ImageProcessor::applyGreyscale(cv::Mat image) {
         cv::Mat imageGrey;
-        cv::cvtColor(image, imageGrey, CV_BGR2GRAY);
+
+        // ROS_INFO_STREAM(image.-)
+
+        cv::cvtColor(image, imageGrey, CV_BGRA2GRAY);
         return imageGrey;
     }
 
@@ -38,7 +41,7 @@ namespace Image {
 
     cv::Mat ImageProcessor::applyCanny(cv::Mat image) {
         cv::Mat edgeImage;
-        cv::Canny(image, edgeImage, 100, 200, 3, false);
+        cv::Canny(image, edgeImage, 75, 100, 3, false);
         return edgeImage;
     }
 

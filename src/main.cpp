@@ -1,10 +1,18 @@
 #include "ros/ros.h"
 #include "image/ImageConverter.h"
 #include "image/ImageProcessor.h"
+#include "recognition/Recogniser.h"
+#include "recognition/AngleRecogniser.h"
+
+#include "edge_detector/NamedFeature.h"
+#include "edge_detector/RecognisedFeatureArray.h"
 
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
+#include <std_msgs/Float32.h>
 #include <vector>
+
+#include "opencv2/objdetect.hpp"
 
 using namespace Image;
 
@@ -12,28 +20,200 @@ ImageConverter converter;
 ImageProcessor processor;
 
 image_transport::Publisher imagePub;
+ros::Publisher featurePub;
+ros::Publisher anglePub;
+
+std::vector<Recognition::Feature*> features;
+
+int sequenceCounter = 0;
+
+// void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
+//     cv::Mat inputImage = converter.convertMessageToCVImage(msg);
+
+//     if(inputImage.empty()) return;
+
+//     ROS_INFO("thing");
+//     // cv::Mat image = cv::imread("/home/jon/Pictures/IMG_3911.jpeg");
+//     cv::Mat image = inputImage.clone();
+//     image = processor.apply(image, std::vector<ImageProcessor::Option>{
+//         ImageProcessor::Option::GREYSCALE,
+//         ImageProcessor::Option::GAUSSIAN,
+//         ImageProcessor::Option::BILATERAL_FILTER,
+//         ImageProcessor::Option::CANNY_EDGE
+//     });
+
+//     Recognition::Recogniser recog = Recognition::Recogniser(features);
+//     std::vector<Recognition::RecognisedFeature> out = recog.processImage(image);
+
+//     cv::Mat blankImage;
+//     cv::cvtColor(cv::Mat(image.size(), image.type()), blankImage, CV_GRAY2RGB);
+
+//     std::vector<edge_detector::NamedFeature> namedFeatures;
+
+//     // for(auto feature : out) {
+//     //     // if(feature.rect.area() < 8000) continue; 
+//     //     cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
+//     //     cv::Point textPoint = cv::Point(feature.rect.br().x, feature.rect.br().y+10);
+
+//     //     std::stringstream stream;
+//     //     stream << "W" << std::to_string(feature.rect.width) << "/H" << std::to_string(feature.rect.height);
+//     //     std::string str;
+//     //     stream >> str;
+
+//     //     cv::putText(blankImage, str, textPoint, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 0.9, cv::Scalar(156,200, 50));
+//     // }
+
+//     // for(auto feature : out) {
+//     //     cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
+//     //     cv::Point textPoint = cv::Point(feature.rect.br().x, feature.rect.br().y+10);
+//     //     cv::putText(blankImage, feature.feature->name, textPoint, cv::FONT_HERSHEY_COMPLEX, 1.2, cv::Scalar(255,0, 0));
+
+//     //     edge_detector::NamedFeature featureMsg;
+//     //     featureMsg.name = feature.feature->name;
+//     //     featureMsg.imageX = feature.rect.tl().x;
+//     //     featureMsg.imageY = feature.rect.tl().y;
+//     //     featureMsg.rectHeight = feature.rect.height;
+//     //     featureMsg.rectWidth = feature.rect.width;
+//     //     namedFeatures.push_back(featureMsg);
+//     // }
+
+//     // edge_detector::RecognisedFeatureArray array;
+//     // array.header.seq = sequenceCounter;
+//     // array.header.stamp = ros::Time::now();
+//     // array.header.frame_id = 0x01;
+//     // array.features = namedFeatures;
+
+//     // featurePub.publish(array);
+
+//     // cv::Mat transparent;
+//     // // cv::Mat background = cv::imread("/home/jon/Pictures/IMG_3911.jpeg");
+//     // cv::Mat background = inputImage.clone();
+//     // cv::inRange(blankImage, cv::Scalar(0,0,0), cv::Scalar(0,0,0), transparent);
+//     // blankImage.copyTo(background, 255-transparent);
+
+//     sensor_msgs::Image message = converter.convertCVImageToMessage(blankImage, sensor_msgs::image_encodings::RGB8);
+//     imagePub.publish(message);
+// }
+
+cv::CascadeClassifier classifier;
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
-    // cv::Mat image = converter.convertMessageToCVImage(msg);
-    cv::Mat image = cv::imread("/home/jon/Pictures/IMG_3911.jpeg");
+    cv::Mat inputImage = converter.convertMessageToCVImage(msg);
+
+    ROS_INFO_STREAM("hello world");
+
+    if(inputImage.empty()) return;
+
+    cv::Mat image = inputImage.clone();
+
     image = processor.apply(image, std::vector<ImageProcessor::Option>{
         ImageProcessor::Option::GREYSCALE,
-        ImageProcessor::Option::GAUSSIAN,
-        ImageProcessor::Option::BILATERAL_FILTER,
-        // ImageProcessor::Option::CANNY_EDGE, 
-        // ImageProcessor::Option::CONTOURS
+        // ImageProcessor::Option::GAUSSIAN,
+        // ImageProcessor::Option::BILATERAL_FILTER,
+        // ImageProcessor::Option::CANNY_EDGE
     });
+
+    std::vector<cv::Rect> detections;
+    classifier.detectMultiScale(image, detections);
+
+    for(size_t i = 0; i < detections.size(); i++) {
+        cv::Point center(detections[i].x + detections[i].width / 2, detections[i].y + detections[i].height / 2);
+        cv::ellipse(image, center, cv::Size(detections[i].width / 2, detections[i].height / 2), 0,0, 360, cv::Scalar(255,0,255));
+
+
+    }
+
     sensor_msgs::Image message = converter.convertCVImageToMessage(image, sensor_msgs::image_encodings::MONO8);
     imagePub.publish(message);
+
+    // Recognition::Recogniser recog = Recognition::Recogniser(features);
+    // std::vector<Recognition::RecognisedFeature> out = recog.processImage(image);
+
+    // cv::Mat blankImage;
+    // cv::cvtColor(cv::Mat(image.size(), image.type()), blankImage, CV_GRAY2RGB);
+
+    // std::vector<edge_detector::NamedFeature> namedFeatures;
+
+    // for(auto feature : out) {
+    //     // if(feature.rect.area() < 8000) continue; 
+    //     // cv::rectangle(blankImage, feature.rect.tl(), feature.rect.br(), cv::Scalar(255,255,255), 2);
+    //     cv::RotatedRect rect = feature.rect;
+    //     cv::Point2f vertices2f[4];
+    //     rect.points(vertices2f);
+
+    //     std::vector<cv::Point> vertices(4);
+    //     for(int i = 0; i < 4; i++) {
+    //         vertices[i] = vertices2f[i];
+    //     }
+
+    //     cv::Point textPoint = cv::Point(vertices[0].x, vertices[0].y+10);
+
+    //     // cv::fillConvexPoly(blankImage, vertices, 4, cv::Scalar(255, 0, 0));
+
+    //     cv::polylines(blankImage, vertices, true, cv::Scalar(255,0,0), 3);
+        
+
+    //     std::stringstream stream;
+    //     // stream << "W" << std::to_string(feature.rect.width) << "/H" << std::to_string(feature.rect.height);
+    //     std::string str;
+    //     stream >> str;
+
+    //     cv::putText(blankImage, str, textPoint, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 0.9, cv::Scalar(156,200, 50));
+    // }
+
+    // cv::Mat transparent;
+    // cv::Mat background = inputImage.clone();
+    // cv::inRange(blankImage, cv::Scalar(0,0,0), cv::Scalar(0,0,0), transparent);
+    // blankImage.copyTo(background, 255-transparent);
+
+    // sensor_msgs::Image message = converter.convertCVImageToMessage(blankImage, sensor_msgs::image_encodings::RGB8);
+    // imagePub.publish(message);
+
+    // ROS_INFO("Cloned image");
+
+    // Recognition::AngleRecogniser angleRecog;
+
+    // Recognition::CurrentAngle angle = angleRecog.processImage(image);
+
+    // std_msgs::Float32 angleMessage;
+    // angleMessage.data = angle.boardAngle;
+    // anglePub.publish(angleMessage);
 }
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "edge_detector");
     ros::NodeHandle n;
 
+    if(!classifier.load("/home/jon/development/haar/ethernetport/empty_data/cascade.xml")) {
+        ROS_ERROR("Error loading classifier");
+        return -1;
+    }
+
     image_transport::ImageTransport transport(n);
     image_transport::Subscriber imageSub = transport.subscribe("/camera/color/image_raw", 1, imageCallback);
+    // image_transport::Subscriber imageSub = transport.subscribe("/image_publisher_1652420056196693570/image_raw", 10, &imageCallback);
     imagePub = transport.advertise("/image_convert/output_video", 1);
+
+    featurePub = n.advertise<edge_detector::RecognisedFeatureArray>("features", 1000);
+    anglePub = n.advertise<std_msgs::Float32>("angles", 10);
+
+    Recognition::RectangularFeature *board = new Recognition::RectangularFeature("Board", 853, 1425);
+    Recognition::RectangularFeature *computer = new Recognition::RectangularFeature("Computer", 306, 141);
+    Recognition::RectangularFeature *keyslot = new Recognition::RectangularFeature("Keyslot", 164, 166);
+    Recognition::RectangularFeature *batteryBox = new Recognition::RectangularFeature("Battery Box", 204, 409);
+    Recognition::RectangularFeature *ethernetA = new Recognition::RectangularFeature("Ethernet A", 164, 166);
+    Recognition::RectangularFeature *ethernetB = new Recognition::RectangularFeature("Ethernet B", 140, 140);
+    Recognition::RectangularFeature *coinHolder = new Recognition::RectangularFeature("Coin Holder", 90, 271);
+
+    features.push_back(board);
+    features.push_back(computer);
+    features.push_back(keyslot);
+    features.push_back(batteryBox);
+    features.push_back(ethernetA);
+    features.push_back(ethernetB);
+    features.push_back(coinHolder);
+
+
 
     ros::spin();
 }
