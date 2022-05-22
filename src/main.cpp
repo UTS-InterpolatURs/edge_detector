@@ -16,6 +16,7 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Float32.h>
+#include <geometry_msgs/Point32.h>
 #include <vector>
 
 #include "opencv2/objdetect.hpp"
@@ -26,30 +27,13 @@ ImageConverter converter;
 ImageProcessor processor;
 
 image_transport::Publisher imagePub;
+ros::Publisher centerPub;
 
 std::vector<Recognition::Feature*> features;
 
 int sequenceCounter = 0;
 
 DepthFilter depthFilter;
-
-// void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
-//     cv::Mat inputImage = converter.convertMessageToCVImage(msg, msg->encoding);
-
-//     ROS_INFO_STREAM("Encoding: " << msg->encoding);
-
-//     cv::Mat norm = depthFilter.removePixelsBelowDepth(inputImage, 100);
-
-//     cv::Mat processedImage = processor.apply(norm, std::vector<ImageProcessor::Option>{
-//         ImageProcessor::Option::GREYSCALE,
-//         // ImageProcessor::Option::GAUSSIAN,
-//         // ImageProcessor::Option::BILATERAL_FILTER,
-//         // ImageProcessor::Option::CANNY_EDGE
-//     });
-
-//     sensor_msgs::Image output = converter.convertCVImageToMessage(norm, msg->encoding);
-//     imagePub.publish(output);
-// }
 
 void imageCallback(const sensor_msgs::ImageConstPtr &alignedMessage, const sensor_msgs::ImageConstPtr &colorMessage) {
     cv::Mat inputColorImage = converter.convertMessageToCVImage(colorMessage, colorMessage->encoding);
@@ -109,6 +93,12 @@ void imageCallback(const sensor_msgs::ImageConstPtr &alignedMessage, const senso
 
     cv::Point point = rect.center;
 
+    geometry_msgs::Point32 centerMessage;
+    centerMessage.x = point.x;
+    centerMessage.y = point.y;
+
+    centerPub.publish(centerMessage);
+
     sensor_msgs::Image output = converter.convertCVImageToMessage(processedImage, sensor_msgs::image_encodings::MONO8);
     imagePub.publish(output);
 }
@@ -129,6 +119,8 @@ int main(int argc, char **argv) {
     message_filters::Synchronizer<ImageSyncPolicy> sync(ImageSyncPolicy(10), depthSub, imageSub);
     sync.registerCallback(boost::bind(&imageCallback, _1, _2));
 
+    centerPub = n.advertise<geometry_msgs::Point32>("center", 10);
+
     Recognition::RectangularFeature *board = new Recognition::RectangularFeature("Board", 853, 1425);
     Recognition::RectangularFeature *computer = new Recognition::RectangularFeature("Computer", 306, 141);
     Recognition::RectangularFeature *keyslot = new Recognition::RectangularFeature("Keyslot", 164, 166);
@@ -144,8 +136,6 @@ int main(int argc, char **argv) {
     features.push_back(ethernetA);
     features.push_back(ethernetB);
     features.push_back(coinHolder);
-
-
 
     ros::spin();
 }
