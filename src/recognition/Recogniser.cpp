@@ -13,19 +13,18 @@ namespace Recognition {
         std::vector<std::vector<cv::Point>> contourPoly(contours.size());
 
         for(size_t i = 0; i < contours.size(); i++) {
-            if(i > 0) return output;
             cv::approxPolyDP(contours[i], contourPoly[i], 3, true);
             cv::RotatedRect rect = cv::minAreaRect(contourPoly[i]);
+            
+            // cv::Rect boundingRect = rect.boundingRect();
+            // float area = boundingRect.area();
 
-            // int index = findMatchingArea(rect);
-
-            // if(index == -1) continue;
+            // if(area < 5000) return output;
 
             RecognisedFeature feature;
             feature.rect = rect;
             feature.imageX = rect.boundingRect().x;
             feature.imageY = rect.boundingRect().y;
-            // feature.feature = featureList.at(i);
             feature.contourPoints = contours.at(i);
 
             output.push_back(feature);
@@ -38,7 +37,7 @@ namespace Recognition {
         std::vector<std::vector<cv::Point>> contours;
         std::vector<cv::Vec4i> hierachy;
 
-        cv::findContours(image, contours, hierachy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+        cv::findContours(image, contours, hierachy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
         return std::pair<std::vector<std::vector<cv::Point>>, std::vector<cv::Vec4i>>(contours, hierachy);
     }

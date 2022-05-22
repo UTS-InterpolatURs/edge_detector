@@ -53,6 +53,7 @@ add_executable(${PROJECT_NAME}
   src/image/ImageProcessor.cpp
   src/recognition/Recogniser.cpp
   src/recognition/AngleRecogniser.cpp
+  src/depth/DepthFilter.cpp
 )
 
 target_link_libraries(
