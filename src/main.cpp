@@ -93,11 +93,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr &alignedMessage, const senso
 
     cv::Point point = rect.center;
 
+    cv::circle(processedImage, point, 20, cv::Scalar(255,255,255), 3);
+
     geometry_msgs::Point32 centerMessage;
     centerMessage.x = point.x;
     centerMessage.y = point.y;
 
     centerPub.publish(centerMessage);
+
+    ROS_INFO_STREAM("1: " << vertices[0] << " 2: " << vertices[1] << " 3: " << vertices[2] << " 4: " << vertices[3]);
 
     sensor_msgs::Image output = converter.convertCVImageToMessage(processedImage, sensor_msgs::image_encodings::MONO8);
     imagePub.publish(output);
